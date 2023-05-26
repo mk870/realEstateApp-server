@@ -18,15 +18,17 @@ type AccessTokenClaims struct {
 	LastName  string
 	Email     string
 	Id        string
+	Photo     string
 	jwt.StandardClaims
 }
 
-func GenerateAccessToken(firstName string, lastName string, email string, id int) string {
+func GenerateAccessToken(firstName string, lastName string, email string, id int, photo string) string {
 	claims := &AccessTokenClaims{
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,
 		Id:        string(rune(id)),
+		Photo:     photo,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Minute * time.Duration(60)).Unix(),
 			Id:        string(rune(id)),

@@ -48,9 +48,9 @@ func RefreshAccessToken(c *gin.Context) {
 		}
 
 		user.RefreshToken = newRefreshToken
-		isStudentUpdated := repositories.SaveUserUpdate(user)
-		if isStudentUpdated {
-			newAccessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id)
+		isUserUpdated := repositories.SaveUserUpdate(user)
+		if isUserUpdated {
+			newAccessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id, user.Photo)
 			if newAccessToken == "failed" {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "could not create a new access token",
@@ -64,7 +64,7 @@ func RefreshAccessToken(c *gin.Context) {
 			return
 		}
 	}
-	newAccessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id)
+	newAccessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id, user.Photo)
 	if newAccessToken == "failed" {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "could not create a new access token",
@@ -125,7 +125,7 @@ func Login(c *gin.Context) {
 	}
 	user.RefreshToken = refreshToken
 	repositories.SaveUserUpdate(user)
-	accessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id)
+	accessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id, user.Photo)
 	if accessToken == "failed" {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to create access token",

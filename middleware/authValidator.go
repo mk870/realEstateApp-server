@@ -15,7 +15,7 @@ func AuthValidator(c *gin.Context) {
 	clientToken := strings.Split(clientAuthorizationHeader, " ")[1]
 	if clientToken == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Unauthorized, you dont have an access token",
+			"error": "Unauthorized,no access token",
 		})
 		c.Abort()
 		return

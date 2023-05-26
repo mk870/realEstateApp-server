@@ -35,25 +35,25 @@ func VerifyToken(c *gin.Context) {
 		isUserDeleted := repositories.DeleteUserById(strconv.Itoa(storedVerificationToken.UserId))
 		if !isUserDeleted {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "this user does not exist",
+				"error": "user not found",
 			})
 			return
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "this verification token has expired please signup again",
+				"error": "verification token has expired please signup again",
 			})
 			return
 		}
 	}
 	user := repositories.GetUserById(strconv.Itoa(storedVerificationToken.UserId))
 	if user == nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "this user does not exist"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "user not found"})
 		return
 	}
 	refreshToken := tokens.GenerateRefreshToken(user.FirstName, user.LastName, user.Email)
 	if refreshToken == "failed" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "could not generate your refresh token",
+			"error": "could not generate refresh token",
 		})
 		return
 	}
@@ -61,10 +61,10 @@ func VerifyToken(c *gin.Context) {
 	user.IsActive = true
 	isUpdated := repositories.SaveUserUpdate(user)
 	if isUpdated {
-		accessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id)
+		accessToken := tokens.GenerateAccessToken(user.FirstName, user.LastName, user.Email, user.Id, user.Photo)
 		if accessToken == "failed" {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "could not generate your access token",
+				"error": "could not generate access token",
 			})
 			return
 		}

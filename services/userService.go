@@ -83,7 +83,9 @@ func GetUser(c *gin.Context) {
 func UpdateUser(c *gin.Context) {
 	var update models.User
 	c.BindJSON(&update)
-	oldData := repositories.GetUserById(c.Param("id"))
+	loggedInUser := c.MustGet("user").(*models.User)
+	email := loggedInUser.Email
+	oldData := repositories.GetUserByEmail(email)
 	if oldData == nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "this user does not exist"})
 		return
@@ -94,9 +96,76 @@ func UpdateUser(c *gin.Context) {
 	if update.LastName != "" {
 		oldData.LastName = update.LastName
 	}
+	if update.Bio != "" {
+		oldData.Bio = update.Bio
+	}
+	if update.DateOfBirth != "" {
+		oldData.DateOfBirth = update.DateOfBirth
+	}
+	if update.StreetName != "" {
+		oldData.StreetName = update.StreetName
+	}
+	if update.StreetNumber != "" {
+		oldData.StreetNumber = update.StreetNumber
+	}
+	if update.City != "" {
+		oldData.City = update.City
+	}
+	if update.Country != "" {
+		oldData.Country = update.Country
+	}
+	if update.State != "" {
+		oldData.State = update.State
+	}
+	if update.Phone != "" {
+		oldData.Phone = update.Phone
+	}
+	if update.Photo != "" {
+		oldData.Photo = update.Photo
+	}
 	updateResult := repositories.SaveUserUpdate(oldData)
 	if updateResult {
-		c.String(http.StatusOK, "user data updated successfully")
+		c.String(http.StatusOK, "update successful")
+	}
+}
+
+func UpdatePassword(c *gin.Context) {
+	type PasswordBody struct {
+		OldPassword     string
+		NewPassword     string
+		ConfirmPassword string
+	}
+	var body PasswordBody
+	c.BindJSON(&body)
+	if body.ConfirmPassword == "" || body.OldPassword == "" || body.NewPassword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "please enter all required fields"})
+		return
+	}
+	if body.ConfirmPassword != body.NewPassword {
+		c.JSON(http.StatusForbidden, gin.H{"error": "new password is not identical to the confirmed"})
+		return
+	}
+	loggedInUser := c.MustGet("user").(*models.User)
+	email := loggedInUser.Email
+	user := repositories.GetUserByEmail(email)
+	if user == nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "this user does not exist"})
+		return
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.OldPassword))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong old password"})
+		return
+	}
+	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), 10)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
+		return
+	}
+	user.Password = string(hashedNewPassword)
+	updateResult := repositories.SaveUserUpdate(user)
+	if updateResult {
+		c.String(http.StatusOK, "update successful")
 	}
 }
 

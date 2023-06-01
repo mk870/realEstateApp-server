@@ -60,4 +60,4 @@ Built 4 models:
 ***
 In this step I deployed the postgreSQL database to ElephantSQl via 3rd party and deployed the Gin app to Render Cloud.
 
-**Live Implemantation:** [MoviePlus](https://r-estates.vercel.app/)
+**Live Implemantation:** [R-Estates](https://r-estates.vercel.app/)

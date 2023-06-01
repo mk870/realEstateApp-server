@@ -24,7 +24,7 @@ func UpdatePassword(router *gin.Engine) {
 }
 
 func GetUser(router *gin.Engine) {
-	router.GET("/user/:id", middleware.AuthValidator, services.GetUser)
+	router.GET("/user", middleware.AuthValidator, services.GetUser)
 }
 
 func DeleteUser(router *gin.Engine) {

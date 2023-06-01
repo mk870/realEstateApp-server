@@ -12,7 +12,7 @@ func CreateProperty(router *gin.Engine) {
 }
 
 func GetProperties(router *gin.Engine) {
-	router.GET("/properties", middleware.AuthValidator, services.GetProperties)
+	router.GET("/properties/:type", middleware.AuthValidator, services.GetProperties)
 }
 
 func DeleteProperty(router *gin.Engine) {

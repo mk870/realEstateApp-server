@@ -2,6 +2,7 @@ package services
 
 import (
 	"net/http"
+	"time"
 
 	"realEstateApi/models"
 	"realEstateApi/repositories"
@@ -55,7 +56,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	isVerificationEmailSent := SendVerificationEmail(user.Email, user.FirstName, "https://movie-plus-frontend.vercel.app/verification/"+verificationToken.Token)
+	isVerificationEmailSent := SendVerificationEmail(user.Email, user.FirstName, "https://r-estates.vercel.app/verification/"+verificationToken.Token)
 	if !isVerificationEmailSent {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send verification email"})
 		return
@@ -70,14 +71,43 @@ func GetUsers(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	id := c.Param("id")
-	user := repositories.GetUserById(id)
+	type UserProfile struct {
+		FirstName    string
+		LastName     string
+		Email        string
+		Bio          string
+		Photo        string
+		DateOfBirth  string
+		Phone        string
+		City         string
+		StreetName   string
+		StreetNumber string
+		Country      string
+		State        string
+		Id           int
+	}
+	var userProfile UserProfile
+	loggedInUser := c.MustGet("user").(*models.User)
+	email := loggedInUser.Email
+	user := repositories.GetUserByEmail(email)
 	if user == nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "this user does not exist"})
 		return
 	}
-
-	c.JSON(http.StatusOK, user)
+	userProfile.Bio = user.Bio
+	userProfile.City = user.City
+	userProfile.Country = user.Country
+	userProfile.State = user.State
+	userProfile.DateOfBirth = user.DateOfBirth
+	userProfile.StreetName = user.StreetName
+	userProfile.StreetNumber = user.StreetNumber
+	userProfile.Photo = user.Photo
+	userProfile.Phone = user.Phone
+	userProfile.Email = user.Email
+	userProfile.FirstName = user.FirstName
+	userProfile.LastName = user.LastName
+	userProfile.Id = user.Id
+	c.JSON(http.StatusOK, userProfile)
 }
 
 func UpdateUser(c *gin.Context) {
@@ -85,45 +115,58 @@ func UpdateUser(c *gin.Context) {
 	c.BindJSON(&update)
 	loggedInUser := c.MustGet("user").(*models.User)
 	email := loggedInUser.Email
-	oldData := repositories.GetUserByEmail(email)
-	if oldData == nil {
+	user := repositories.GetUserByEmail(email)
+	if user == nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "this user does not exist"})
 		return
 	}
 	if update.FirstName != "" {
-		oldData.FirstName = update.FirstName
+		user.FirstName = update.FirstName
 	}
 	if update.LastName != "" {
-		oldData.LastName = update.LastName
+		user.LastName = update.LastName
 	}
 	if update.Bio != "" {
-		oldData.Bio = update.Bio
+		user.Bio = update.Bio
 	}
 	if update.DateOfBirth != "" {
-		oldData.DateOfBirth = update.DateOfBirth
+		user.DateOfBirth = update.DateOfBirth
 	}
 	if update.StreetName != "" {
-		oldData.StreetName = update.StreetName
+		user.StreetName = update.StreetName
 	}
 	if update.StreetNumber != "" {
-		oldData.StreetNumber = update.StreetNumber
+		user.StreetNumber = update.StreetNumber
 	}
 	if update.City != "" {
-		oldData.City = update.City
+		user.City = update.City
 	}
 	if update.Country != "" {
-		oldData.Country = update.Country
+		user.Country = update.Country
 	}
 	if update.State != "" {
-		oldData.State = update.State
+		user.State = update.State
 	}
 	if update.Phone != "" {
-		oldData.Phone = update.Phone
+		user.Phone = update.Phone
 	}
 	if update.Photo != "" {
-		oldData.Photo = update.Photo
+		user.Photo = update.Photo
 	}
-	updateResult := repositories.SaveUserUpdate(oldData)
+	updateResult := repositories.SaveUserUpdate(user)
+	notificationData := models.Notification{
+		Type:        "Profile",
+		Action:      "Update",
+		Description: "profile updated",
+		Date:        time.Now().Format("02-01-2006"),
+	}
+	isNotificationCreated := CreateNotification(notificationData, user)
+	if isNotificationCreated != "Notification saved" {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "profile updated but notification creation failed",
+		})
+		return
+	}
 	if updateResult {
 		c.String(http.StatusOK, "update successful")
 	}
@@ -164,8 +207,21 @@ func UpdatePassword(c *gin.Context) {
 	}
 	user.Password = string(hashedNewPassword)
 	updateResult := repositories.SaveUserUpdate(user)
+	notificationData := models.Notification{
+		Type:        "Password",
+		Action:      "Update",
+		Description: "password change",
+		Date:        time.Now().Format("02-01-2006"),
+	}
+	isNotificationCreated := CreateNotification(notificationData, user)
+	if isNotificationCreated != "Notification saved" {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "password changed but notification creation failed",
+		})
+		return
+	}
 	if updateResult {
-		c.String(http.StatusOK, "update successful")
+		c.String(http.StatusOK, "password change successful")
 	}
 }
 

@@ -38,13 +38,13 @@ func CreateProperty(c *gin.Context) {
 	notificationData := models.Notification{
 		Type:        "Property",
 		Action:      "Post",
-		Description: "added property tmx to your rentals watchlist",
-		Date:        time.Now().Format("dd-mm-yy"),
+		Description: "added property to your " + property.Status + " watchlist",
+		Date:        time.Now().Format("02-01-2006"),
 	}
 	isNotificationCreated := CreateNotification(notificationData, user)
 	if isNotificationCreated != "Notification saved" {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "property saved but notification not created",
+			"error": "property saved but notification creation failed",
 		})
 		return
 	}
@@ -52,6 +52,7 @@ func CreateProperty(c *gin.Context) {
 }
 
 func GetProperties(c *gin.Context) {
+	property_type := c.Param("type")
 	loggedInUser := c.MustGet("user").(*models.User)
 	email := loggedInUser.Email
 	user := repositories.GetUserByEmail(email)
@@ -62,7 +63,13 @@ func GetProperties(c *gin.Context) {
 		return
 	}
 	propertyList := repositories.GetProperties(user.Id)
-	c.JSON(http.StatusOK, propertyList)
+	requestedPropertyList := []models.Property{}
+	for _, property := range propertyList {
+		if property.Status == property_type {
+			requestedPropertyList = append(requestedPropertyList, property)
+		}
+	}
+	c.JSON(http.StatusOK, requestedPropertyList)
 }
 
 func DeleteProperty(c *gin.Context) {
@@ -78,7 +85,19 @@ func DeleteProperty(c *gin.Context) {
 	}
 	property := repositories.GetProperty(user.Id, property_id)
 	isDeleted := repositories.DeletePropertyById(user, property)
-
+	notificationData := models.Notification{
+		Type:        "Property",
+		Action:      "Delete",
+		Description: "deleted property from " + property.Status + " watchlist",
+		Date:        time.Now().Format("02-01-2006"),
+	}
+	isNotificationCreated := CreateNotification(notificationData, user)
+	if isNotificationCreated != "Notification saved" {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "property deleted but notification creation failed",
+		})
+		return
+	}
 	if isDeleted {
 		c.JSON(http.StatusOK, "Delete successful")
 		return

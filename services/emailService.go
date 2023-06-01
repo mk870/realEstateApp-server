@@ -5,7 +5,7 @@ import (
 )
 
 func emailHtml(firstName string, frontendLink string) string {
-	return ("<h1>Hi " + firstName + "</h1> <p>Thank you for registering with <span style=\"color: rgb(71,91,232);font-size: 18px;font-weight:bold;\">R Estates</span>. Please click on the link to activate your account: <a href=\"" + frontendLink + "\"style=\"font-size: 15px;\">Activate Now</a></p></p> Link will expire in 15 minutes. See you soon</p>")
+	return ("<h1>Hi " + firstName + "</h1> <p>Thank you for registering with <span style=\"color: rgb(71,91,232);font-size: 18px;font-weight:bold;\">R-Estates</span>. Please click on the link to activate your account: <a href=\"" + frontendLink + "\"style=\"font-size: 15px;\">Activate Now</a></p></p> Link will expire in 15 minutes. See you soon</p>")
 }
 
 func SendVerificationEmail(email string, firstName string, frontendLink string) bool {
